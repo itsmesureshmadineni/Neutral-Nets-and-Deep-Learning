@@ -1,0 +1,200 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourcelocation": {
+            "type": "string",
+            "defaultValue": "East US",
+            "allowedValues": ["East US", "UK South"]
+        }
+    },
+    "functions": [],
+    "variables": {
+        "tagsname": "DevOpsaz104"
+    },
+    "resources": [
+        {
+        "name": "virtualNetwork1",
+        "type": "Microsoft.Network/virtualNetworks",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('resourcelocation')]",
+        "tags": {
+            "displayName": "[variables('tagsname')]"
+        },
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "10.0.0.0/16"
+                ]
+            },
+            "subnets": [
+                {
+                    "name": "Subnet-1",
+                    "properties": {
+                        "addressPrefix": "10.0.0.0/24"
+                    }
+                },
+                {
+                    "name": "Subnet-2",
+                    "properties": {
+                        "addressPrefix": "10.0.1.0/24"
+                    }
+                }
+            ]
+        }
+    },
+
+    {
+        "name": "az104-IP",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('resourcelocation')]",
+        "tags": {
+            "displayName": "[variables('tagsname')]"
+        },
+        "sku":{
+            "name": "Basic"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "Dynamic"
+        }
+    },
+
+    {
+        "name": "az104NIC",
+        "type": "Microsoft.Network/networkInterfaces",
+        "apiVersion": "2020-11-01",
+        "location": "[parameters('resourcelocation')]",
+        "tags": {
+            "displayName": "[variables('tagsname')]"
+        },
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks', 'virtualNetwork1')]",
+            "[resourceId('Microsoft.Network/publicIPAddresses', 'az104-IP')]"
+        ],
+
+        "properties": {
+            "ipConfigurations": [
+                {
+                    "name": "ipConfig1",
+                    "properties": {
+                        "privateIPAllocationMethod": "Dynamic",
+                        "subnet": {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', 'virtualNetwork1', 'subnet-1')]"
+                        },
+                        "publicIPAddress": {
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'az104-IP')]"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+
+    {
+        "name": "azsuresh9893storage",
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2021-04-01",
+        "tags": {
+            "displayName": "[variables('tagsname')]"
+        },
+        "location": "[resourceGroup().location]",
+        "kind": "StorageV2",
+        "sku": {
+            "name": "Standard_LRS"
+        }
+    },
+
+    {
+        "name": "az104-nsg",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "apiVersion": "2020-11-01",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "securityRules": [
+                {
+                    "name": "Allow-SSH",
+                    "properties": {
+                        "description": "allow ssh",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "22",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Inbound"
+                    }
+                },
+                {
+                    "name": "Allow-HTTP",
+                    "properties": {
+                        "description": "allow http",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "*",
+                        "destinationPortRange": "80",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 200,
+                        "direction": "Inbound"
+                    }
+                }
+            ]
+        }
+    },
+
+    //creation of vm
+    {
+        "name": "ubuntu1",
+        "type": "Microsoft.Compute/virtualMachines",
+        "apiVersion": "2021-03-01",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Network/networkInterfaces', 'az104NIC')]",
+            "[resourceId('Microsoft.Storage/storageAccounts', 'azsuresh9893storage')]"
+        ],
+        "tags": {
+            "displayName": "ubuntuVM1"
+        },
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "Standard_D2s_v3"
+            },
+            "osProfile": {
+                "computerName": "ubuntuVM1",
+                "adminUsername": "suresh",
+                "adminPassword": "admin@123456"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "Canonical",
+                    "offer": "0001-com-ubuntu-server-focal",
+                    "sku": "20_04-lts-gen2",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "ubuntuVM1-OSDisk",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', 'az104NIC')]"
+                    }
+                ]
+            },
+            "diagnosticsProfile": {
+                "bootDiagnostics": {
+                    "enabled": true,
+                    "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', toLower('azsuresh9893storage'))).primaryEndpoints.blob]"
+                }
+            }
+        }
+    }
+
+    ],
+    "outputs": {}
+}
