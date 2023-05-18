@@ -1,0 +1,6 @@
+git init
+git config --global user.name  "itsmesureshmadineni"
+git config --global user.email "itsmesureshmadineni@gmail.com"
+
+git add . 
+git commit -m "first commit"
