@@ -13,5 +13,7 @@ git log --all
 git checkout <commit number>
 
 #unstaging 
-
 git rm --cached <filename>
+
+#gitbranches
+git checkout -b feature1.0
