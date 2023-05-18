@@ -2,5 +2,8 @@ git init
 git config --global user.name  "itsmesureshmadineni"
 git config --global user.email "itsmesureshmadineni@gmail.com"
 
+git clone https://github.com/itsmesureshmadineni/azure.githttps://github.com/itsmesureshmadineni/azure.git
+
 git add . 
 git commit -m "first commit"
+git push origin main
