@@ -9,6 +9,7 @@ git commit -m "first commit"
 git push origin main
 
 git log --all
+git log --graph
 
 git checkout <commit number>
 
@@ -16,4 +17,4 @@ git checkout <commit number>
 
 git rm --cached <filename>
 
-#
+
