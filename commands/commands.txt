@@ -16,3 +16,6 @@ git checkout <commit number>
 
 #unstaging 
 git rm --cached <filename>
+
+#merge
+git merge --squash <branch>
