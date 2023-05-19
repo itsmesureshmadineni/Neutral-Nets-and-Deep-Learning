@@ -15,3 +15,5 @@ git checkout <commit number>
 #unstaging 
 
 git rm --cached <filename>
+
+#
